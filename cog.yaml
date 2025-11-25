@@ -1,12 +1,22 @@
+image: "r8.im/cog-base:cuda12.8-python3.12-torch2.8.0"
 build:
+  # set to true if your model requires a GPU
   gpu: true
-  cuda: "12.1"
-  system_packages:
-    - ffmpeg
+  cuda: "12.8"
   python_version: "3.12"
+  # a list of ubuntu apt packages to install
+  system_packages:
+    - "git"
+
+  # path to a Python requirements.txt file
   python_requirements: requirements.txt
+
+  # commands run after the environment is setup
   run:
-    - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/latest/download/pget_$(uname -s)_$(uname -m)" && chmod +x /usr/local/bin/pget
+    - pip install -U "huggingface_hub[cli]"
+    - pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128
+    - pip install xformers==0.0.32.post1
+    - pip install https://huggingface.co/nunchaku-tech/nunchaku/resolve/main/nunchaku-1.0.2%2Btorch2.8-cp312-cp312-linux_x86_64.whl
     - pip install onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
+
 predict: "predict.py:Predictor"
-train: "train.py:train"
