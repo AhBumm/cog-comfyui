@@ -7,9 +7,7 @@ from PIL import Image
 from typing import List, Optional
 from cog import BasePredictor, Input, Path
 from comfyui import ComfyUI
-from weights_downloader import WeightsDownloader
 from cog_model_helpers import optimise_images
-from config import config
 import requests
 import base64
 
@@ -35,46 +33,12 @@ with open("examples/api_workflows/birefnet_api.json", "r") as file:
 
 class Predictor(BasePredictor):
     def setup(self, weights: str):
-        if bool(weights):
-            self.handle_user_weights(weights)
-
         for directory in ALL_DIRECTORIES:
             os.makedirs(directory, exist_ok=True)
         os.makedirs(os.environ.get("YOLO_CONFIG_DIR", "/tmp/Ultralytics"), exist_ok=True)
 
         self.comfyUI = ComfyUI("127.0.0.1:8188")
         self.comfyUI.start_server(OUTPUT_DIR, INPUT_DIR)
-
-    def handle_user_weights(self, weights: str):
-        if hasattr(weights, "url"):
-            if weights.url.startswith("http"):
-                weights_url = weights.url
-            else:
-                weights_url = "https://replicate.delivery/" + weights.url
-        else:
-            weights_url = weights
-
-        print(f"Downloading user weights from: {weights_url}")
-        WeightsDownloader.download("weights.tar", weights_url, config["USER_WEIGHTS_PATH"])
-        for item in os.listdir(config["USER_WEIGHTS_PATH"]):
-            source = os.path.join(config["USER_WEIGHTS_PATH"], item)
-            destination = os.path.join(config["MODELS_PATH"], item)
-            if os.path.isdir(source):
-                if not os.path.exists(destination):
-                    print(f"Moving {source} to {destination}")
-                    shutil.move(source, destination)
-                else:
-                    for root, _, files in os.walk(source):
-                        for file in files:
-                            if not os.path.exists(os.path.join(destination, file)):
-                                print(
-                                    f"Moving {os.path.join(root, file)} to {destination}"
-                                )
-                                shutil.move(os.path.join(root, file), destination)
-                            else:
-                                print(
-                                    f"Skipping {file} because it already exists in {destination}"
-                                )
 
     def handle_input_file(self, input_file: Path):
         file_extension = self.get_file_extension(input_file)
